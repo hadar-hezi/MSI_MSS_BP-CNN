@@ -19,12 +19,9 @@ import os
 import copy
 import sys
 
-from bootsrap_roc import *
-from compute_roc import *
 import log_file
-from ignore_label import ignore_label
 from log_file import summary
-
+from get_auc import *
 
 def test_model(model,prepare,hp): 
     model.eval()
@@ -42,7 +39,7 @@ def test_model(model,prepare,hp):
             paths = np.array(paths)
             inputs = inputs.to(prepare.device)
             labels = labels.to(prepare.device)
-            # transfer to MSI =1 MSS=0
+            # transfer to MSI =1 MSS=0 for binary loss
             labels = 1-labels
             outputs = model(inputs)
             prob_y = F.softmax(outputs,1)
@@ -66,7 +63,7 @@ def test_model(model,prepare,hp):
         all_summary = summary(epoch_preds,epoch_labels,epoch_pos_probs,epoch_paths)
         log_file.save_results(test_data_path, all_summary)
         # area under the curve patient-level
-        auc_ = bootstrap_roc(hp['N_boot'], all_summary,prepare,mode='test',hp=hp)
+        valid_auc = get_auc(valid_summary,prepare,mode='valid',hp=hp)
     return auc_
 
 
