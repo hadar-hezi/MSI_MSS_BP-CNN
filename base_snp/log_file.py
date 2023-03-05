@@ -17,39 +17,8 @@ import sys
 from typing import NamedTuple
 import matplotlib.pyplot as plt
 
-
-# from prepare_data import Prepare
 from compute_roc import * 
         
-def save_f_name(preds,labels,paths):
-    all_names = []
-    tiles = []
-    with open('wrong_labels.txt','a') as f:
-        # print(len(test_loader.dataset.samples))
-        wrong_index = (preds !=labels).nonzero()
-        wrong_files = []
-        for i in wrong_index:
-            # sample_fname, _ = test_loader.dataset.samples[i]
-            f.write("Wrong labels on test set: ")
-            f.write("{}\n".format(paths[i]))
-            wrong_files.append(paths[i])
-    
-    for file in paths:
-        name = get_patient_name(file)
-        all_names.append(name)
-    for j,name in enumerate(all_names):
-        indices = [i for i, x in enumerate(all_names) if x == name]
-        tiles.append(len(indices))
-        
-    preds  = preds.cpu().numpy()
-    labels = labels.cpu().numpy()
-    
-    df = pd.DataFrame({'Predidction': preds, 'Labels': labels, 'file': paths,
-                       'patient': all_names,'tiles': tiles})
-    df.sort_values(by=['patient'])
-    df.to_csv('pytorch_results.csv')
-
-
 def save_results(path,summary):
     preds = summary.preds.cpu().detach()
     labels = summary.labels.cpu().detach()
@@ -60,13 +29,6 @@ def save_results(path,summary):
     df = pd.DataFrame(data_dict)
     df.to_csv(path)
     
-def save_prediction(patient_names,predictions,labels):
-    # patient_names=patient_names.cpu().detach()
-    # predictions=predictions.cpu().detach()
-    
-    data_dict = {'name':patient_names,'MSI_probability':predictions,'labels':labels}
-    df = pd.DataFrame(data_dict)
-    df.to_csv('MSI_probs_per_patient_test.csv')
     
 def read_results(path):
    if os.path.isfile(path):

@@ -53,6 +53,7 @@ def set_model(hp):
         optimizer_ft = optim.Adam(model_ft.parameters(), lr=hp['lr'])
     # print(model_ft)
     return model_ft, optimizer_ft
+    
 # set seeds for reproducibility
 def seed_torch(seed=42):
     random.seed(seed)
@@ -72,11 +73,10 @@ hp = hyperparams()
 # set seeds for reproducity
 seed_torch( hp['newseed'] )
 # define criterion function
-criterion = nn.BCEWithLogitsLoss()
+criterion = nn.BCELoss()
 # cross validation iterations
 cross_valid =  hp['n_folds']                         
 print(hp)
-best_auc =0.0
 # object for data and model definitions
 p = Prepare(hp)
 print(p.device)
@@ -91,7 +91,7 @@ for i in range(cross_valid):
     if(train_bool):
         model_ft,optimizer_ft = set_model(hp)
         # training loop
-        model_ft,best_valid_auc = train_model(model_ft, criterion, optimizer_ft,p,hp,saved_state,early_stopping=4)
+        model_ft,best_valid_auc = train_model(model_ft, criterion, optimizer_ft,p,hp,saved_state,early_stopping=5)
         torch.cuda.empty_cache()
         #create the test loadrer
         p.create_test_loader()

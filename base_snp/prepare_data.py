@@ -147,7 +147,6 @@ class Prepare():
       weight_per_class = [0.] * nclasses   
       # N total number of samples
       N = float(sum(count))  
-      samples_count = nclasses*min(count)
       for i in range(nclasses): 
           if count[i] > 0:
               weight_per_class[i] = N/float(count[i])   
@@ -155,8 +154,7 @@ class Prepare():
       weight = [0] * len(samples)                
        # the sample weight is the class weight                             
       for idx, val in enumerate(samples):  
-          if val[1] > -1:
-              weight[idx] = weight_per_class[val[1]]   
+           weight[idx] = weight_per_class[val[1]]   
       weight = torch.DoubleTensor(weight)   
       
       return weight,weight_per_class   

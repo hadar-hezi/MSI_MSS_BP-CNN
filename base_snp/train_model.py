@@ -16,7 +16,6 @@ from sklearn.metrics import confusion_matrix,f1_score
 from sklearn.metrics import precision_recall_fscore_support
 import pandas as pd
 import torch.nn.functional as F
-#from torch.utils.tensorboard import SummaryWriter
 import time
 import os
 import copy
@@ -31,7 +30,6 @@ from get_auc import *
     
 def train_model(model, criterion, optimizer,prepare, hp,saved_state=None, 
                 early_stopping=4):
-    #writer = SummaryWriter(f"{hp['root_dir']}/experiment1")
     since = time.time()
     best_auc = 0.0
     lr = hp['lr']
@@ -44,7 +42,6 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None,
     train_res = Result(f1=[], loss=[])
     valid_res = Result(f1=[], loss=[])
     epochs_without_improvement = 0
-    best_test_loss = None
     train_data_path = f"{hp['root_dir']}{hp['train_res_file']}_{hp['curr_fold']}.csv"
     resnext_checkpoint =  f"{hp['root_dir']}{hp['checkpoint_save']}_{hp['curr_fold']}.pt"
     num_epochs = hp['num_epochs']
@@ -69,12 +66,10 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None,
                 inputs = inputs.to(prepare.device)
                 # transfer to MSI =1 MSS=0 for binary loss
                 labels = 1-labels
-                # relevant labels tensor to cuda
                 labels=labels.to(prepare.device)
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 # forward
-                # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
                     newOutputs = outputs
@@ -96,9 +91,7 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None,
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                   
-            
-                    # positive class only - MSI
+                               
                     prob_y_msi = prob_y
                     epoch_preds.append(preds)
                     epoch_labels.append(labels)
@@ -129,7 +122,7 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None,
                 valid_res.f1.append(f1)
                 valid_res.loss.append(epoch_loss)
                 valid_summary = summary(epoch_preds_tensor,epoch_labels_tensor,epoch_pos_probs_tensor,epoch_paths_tensor)
-                # calculate AUC
+                # calculate AUC patient-level
                 valid_auc = get_auc(valid_summary,prepare,hp,mode='valid')
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))

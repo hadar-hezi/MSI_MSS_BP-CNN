@@ -36,7 +36,6 @@ def test_model(model,prepare,hp):
     epoch_pos_probs=[]
     test_data_path =  f"{hp['root_dir']}/{hp['test_res_file']}_{hp['curr_fold']}.csv"
       
-# load data.
     with torch.no_grad():
         for  inputs, labels,paths in prepare.dataloaders['test']:
             
@@ -66,6 +65,7 @@ def test_model(model,prepare,hp):
         epoch_paths = np.hstack(epoch_paths)
         all_summary = summary(epoch_preds,epoch_labels,epoch_pos_probs,epoch_paths)
         log_file.save_results(test_data_path, all_summary)
+        # area under the curve patient-level
         auc_=get_auc(all_summary,prepare,hp,mode='test')
     return auc_
 

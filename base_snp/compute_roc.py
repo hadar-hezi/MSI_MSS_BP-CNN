@@ -27,24 +27,6 @@ def compute_roc(labels, probs):
     lr_fpr, lr_tpr, thresh = roc_curve(labels, probs)
       
     return lr_fpr, lr_tpr, MSI_auc 
- 
-def plot_roc(lr_fpr,lr_tpr, MSI_tp_auc,hp,mode):
-    fig, ax = plt.subplots() 
-    lw = 2   
-    ax.plot(lr_fpr, lr_tpr, color='darkorange',
-               lw=lw, label='ROC curve (area = %0.2f)' % MSI_tp_auc)
-    ax.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    plt.rcParams['axes.titlesize'] = 20
-    plt.rcParams['xtick.labelsize']='large'
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title("{}".format(hp['experiment']))
-    ax.legend(loc="lower right")
-    ax.grid(True)  
-    fig.savefig("{}roc_{}.png".format(hp['root_dir'],mode))
-    
     
 def plot_roc_with_ci(fpr,tpr,auc_,hp,mode):
     fig, ax = plt.subplots() 
@@ -95,7 +77,6 @@ def roc_per_patient(summary,p,hp,mode):
     pred_MSI_per_patient = []
 
     for j,name in enumerate(patient_names):
-
        # files of this patient
         indices = [i for i, x in enumerate(summary.paths) if name in x]
         # the test list might contain patient names who's label is -1
