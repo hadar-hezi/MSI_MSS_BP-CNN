@@ -19,10 +19,8 @@ import os
 import copy
 import sys
 
-from bootsrap_roc import *
-from compute_roc import *
+from get_auc import *
 import log_file
-from ignore_label import ignore_label
 from log_file import summary
 
 
@@ -66,8 +64,8 @@ def test_model(model,prepare,hp):
         epoch_paths = np.hstack(epoch_paths)
         all_summary = summary(epoch_preds,epoch_labels,epoch_pos_probs,epoch_paths)
         log_file.save_results(test_data_path, all_summary)
-        # area under the curve patient-level
-        auc_ = bootstrap_roc(hp['N_boot'], all_summary,prepare,mode='test',hp=hp)
+        # calculate AUC patient level
+        test_auc = get_auc(all_summary,prepare,hp=hp,mode='test')
     return auc_
 
 
