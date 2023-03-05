@@ -10,7 +10,7 @@ import numpy as np
 
 def hyperparams():
     hp = dict(
-        batch_size=64,validation_ratio=0.3, lr=1e-4, eps=1e-8, num_workers=2,num_classes=3
+        batch_size=64, lr=1e-4, eps=1e-8, num_workers=2,num_classes=3
     )
 
     hp['newseed'] = 42
@@ -24,10 +24,8 @@ def hyperparams():
     hp['checkpoint_save'] = 'model_snp'
     hp['optimizer_type'] = 'Adam'
     hp['model_type'] = 'inception'
-    hp['hist_type'] = 'rgb'
     hp['pretrained'] = True
     hp['unfixed'] = False
-    hp['N_boot'] = 1
     hp['experiment'] = 'MSI MSS snp'
     hp['snp_thresh'] =1200
     # hp['root_dir']='MSI_MSS_project/snp_model/snp_1200_res_2/'

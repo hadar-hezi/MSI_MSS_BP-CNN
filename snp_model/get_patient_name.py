@@ -8,19 +8,15 @@ Created on Sun Jan 17 18:42:03 2021
 import re
 import numpy as np
 
-
 def get_patient_name(file):
-    # to get patient name take dash - number 3
-    # to get slide take dash number 5
+    # Each patch file has a path of the following: {path to data folder}blk-{random string}-TCGA-{patient_code}-01Z-00-DX1.png
     dash_num =3
+    # find blk in the path
     start_ind = file.find("blk-")
     if start_ind > -1:      
         file = file[start_ind:]
     start_ind = file.find("-TCGA-")
+    # the name is TCGA-{patient_code}
     name = file[start_ind+1:]
-    # dashes_ind= np.nonzero(name=='-')
-    # print("dashes ", len(dashes_ind))
-    dashes_ind = [m.start() for m in re.finditer('-', name)]
-    end_ind = dashes_ind[dash_num-1]
-    name = name[:end_ind]
+    name = name[:12]
     return name

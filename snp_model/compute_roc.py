@@ -28,24 +28,7 @@ def compute_roc(labels, probs):
       
     return lr_fpr, lr_tpr, MSI_auc 
  
-def plot_roc(lr_fpr,lr_tpr, MSI_tp_auc,hp,mode):
-    fig, ax = plt.subplots() 
-    lw = 2   
-    ax.plot(lr_fpr, lr_tpr, color='darkorange',
-               lw=lw, label='ROC curve (area = %0.2f)' % MSI_tp_auc)
-    ax.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    plt.rcParams['axes.titlesize'] = 20
-    plt.rcParams['xtick.labelsize']='large'
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title("{}".format(hp['experiment']))
-    ax.legend(loc="lower right")
-    ax.grid(True)  
-    fig.savefig("{}roc_{}.png".format(hp['root_dir'],mode))
-    
-    
+
 def plot_roc_with_ci(fpr,tpr,auc_,hp,mode):
     fig, ax = plt.subplots() 
     ax.plot(fpr[1], tpr[1], color='green',
@@ -104,7 +87,7 @@ def roc_per_patient(summary,p,hp,mode):
             continue   
         # MSI labels for each patient
         true_MSI = (summary.labels[indices[0]] == 0) 
-        # true_MSS = (summary.labels[indices[0]] == 1)
+        true_MSS = (summary.labels[indices[0]] == 1)
         # equal to 1 for MSI
         true_MSI_score = int(true_MSI)
         #load patches probabilities

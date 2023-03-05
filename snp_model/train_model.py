@@ -17,7 +17,6 @@ import torch.nn.functional as F
 import time
 import copy
 
-
 import log_file
 from log_file import summary
 from compute_roc import *
@@ -57,17 +56,13 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None):
 
             # Iterate over data.
             for inputs, labels,sub_labels, paths in prepare.dataloaders[phase]:
-                batch +=1
-                # labels = labels.type(torch.LongTensor)
                 paths = np.array(paths)
                 inputs = inputs.to(prepare.device)
-                # relevant labels tensor to cuda
                 labels=labels.to(prepare.device)
                 sub_labels=sub_labels.to(prepare.device)
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 # forward
-                # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
                     newOutputs = outputs
@@ -120,7 +115,7 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None):
                 valid_res.f1.append(f1)
                 valid_res.loss.append(epoch_loss)
                 valid_summary = summary(epoch_preds_tensor,epoch_labels_tensor,epoch_sub_labels_tensor,epoch_pos_probs_tensor,epoch_paths_tensor)
-                # calculate AUC
+                # calculate AUC patient level
                 valid_auc = get_auc(valid_summary,prepare,hp=hp,mode='valid')
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
@@ -138,8 +133,8 @@ def train_model(model, criterion, optimizer,prepare, hp,saved_state=None):
                     )
                 torch.save(saved_state, resnext_checkpoint)
                 # reduce step size
-                # for param_group in optimizer.param_groups:
-                    # param_group['lr'] = lr*0.97
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = lr*0.97
         
     log_file.save_results(train_data_path, train_summary)
     log_file.save_results(f"{hp['root_dir']}{hp['valid_res_file']}_{hp['curr_fold']}.csv", valid_summary)
