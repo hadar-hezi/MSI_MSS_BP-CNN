@@ -62,8 +62,8 @@ def test_model(model,prepare,hp):
         epoch_paths = np.hstack(epoch_paths)
         all_summary = summary(epoch_preds,epoch_labels,epoch_pos_probs,epoch_paths)
         log_file.save_results(test_data_path, all_summary)
-        # area under the curve patient-level
-        valid_auc = get_auc(valid_summary,prepare,mode='valid',hp=hp)
+        # calculate AUC patient level
+        test_auc = get_auc(all_summary,prepare,hp=hp,mode='test')
     return auc_
 
 
