@@ -9,21 +9,16 @@ import torch
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-# from matlab_data import *
 
-
-    
-    
+ 
 def plot_mean_auc(p,mode,hp):
     total_tpr =[]
     total_fpr=[]
     total_auc=[]
-    # TODO:
-    # do a shuffle on the indices and take 95% of then at each iteration
     for j in range(hp['n_folds']):
+    # loading patients labels and probabilities
         try:
             with (open(f"{hp['root_dir']}roc_out_{j}.p", "rb")) as openfile:
-            # with (open(f"{root}roc_out_pca_{j}.p", "rb")) as openfile:
                 data = pickle.load(openfile)
         except:
             summary = read_results(f"{hp['root_dir']}/{hp['test_res_file']}_{j}.csv")
@@ -32,16 +27,13 @@ def plot_mean_auc(p,mode,hp):
             #pickle data
             data = {"labels": labels, "probs": probs}
             pickle.dump( data, open( f"{hp['root_dir']}roc_out_{j}.p", "wb" ) )
-        # prec, recall, thresholds = precision_recall_curve(labels,probs)
-        # plot_prec(recall,prec, f1,hp,mode)
         labels = data['labels']
         probs = data['probs']
-        lr_fpr, lr_tpr, MSI_tp_auc = compute_roc(labels, probs)
-                                                
+        # ROC
+        lr_fpr, lr_tpr, MSI_tp_auc = compute_roc(labels, probs)                                               
         print("iter ", j, "AUC: ", MSI_tp_auc)
-    
+        # interpoating the fpr axis
         mean_fpr = np.linspace(0, 1, 200)
-        # mean_fpr = lr_fpr
         interp_tpr = np.interp(mean_fpr, lr_fpr, lr_tpr)
         interp_tpr[0] = 0.0
         total_tpr.append(interp_tpr)
@@ -53,15 +45,10 @@ def plot_mean_auc(p,mode,hp):
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(total_auc)
     std_tpr = np.std(total_tpr, axis=0)
-    # tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    # tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    print(mean_auc)
+    # 95 CI of AUC results
     sorted_auc = np.array(total_auc)
     sorted_auc.sort()
     
-    # Computing the lower and upper bound of the 90% confidence interval
-    # You can change the bounds percentiles to 0.025 and 0.975 to get
-    # a 95% confidence interval instead.
     confidence_lower = sorted_auc[int(0.05 * len(sorted_auc))]
     # nonzero returns tuple
     index = np.nonzero(total_auc==confidence_lower)
@@ -79,14 +66,12 @@ def plot_mean_auc(p,mode,hp):
 
     fpr = [mean_fpr,mean_fpr,mean_fpr]
     tpr = [tpr_lo_ci,mean_tpr,tpr_hi_ci]
-    #pickle data
-    data = {"mean fpr": mean_fpr, "tpr low ci": tpr_lo_ci,"mean tpr": mean_tpr,"tpr high ci":tpr_hi_ci}
-    pickle.dump( data, open( f"{hp['root_dir']}data_for_snp_lr_roc.p", "wb" ) )
     auc_ = [confidence_lower,mean_auc,confidence_upper]
     print(auc_)
     plot_roc_with_ci(fpr,tpr,auc_,hp,mode)
     return mean_auc
 
+# plots a boxplot of baseline vs BP-CNN AUC results
 def roc_boxplot(aucs_base,aucs_sub,feature):
     data = [aucs_base,aucs_sub]
 
@@ -102,16 +87,15 @@ def roc_boxplot(aucs_base,aucs_sub,feature):
                          patch_artist=True,  # fill with color
                          labels=labels)  # will be used to label x-ticks
     ax.set_title(f"AUC results of baseline and {feature}",fontsize=20)
-    #ax.legend(["base std: ", "feature std: "])
     ax.grid(True)
     # fill with colors
     colors = ['pink', 'lightblue']
     for patch, color in zip(bplot['boxes'], colors):
         patch.set_facecolor(color)
     labelsize = 24
-    #rcParams['xtick.labelsize'] = labelsize
-    plt.savefig(f"{hp['root_dir']}boxplot_roc.png",dpi=300, bbox_inches = "tight")
-
+    plt.savefig(f"{hp['root_dir']}boxplot_roc.png",dpi=500, bbox_inches = "tight")
+    
+# paired t-test of the AUC results
 def paired_t_test(samples_a,samples_b):
     print(stats.ttest_rel(samples_a, samples_b))
     print(np.std(samples_a))
@@ -173,4 +157,4 @@ def plot_base_sub(hp):
 hp = hyperparams()
 p = Prepare(hp)   
 plot_mean_auc(p,'test',hp)  
-# plot_base_sub(hp) 
+plot_base_sub(hp) 

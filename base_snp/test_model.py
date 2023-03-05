@@ -17,7 +17,6 @@ from sklearn.metrics import precision_recall_fscore_support
 import torch.nn.functional as F
 
 
-# from prepare_data import Prepare
 from get_auc import *
 from compute_roc import *
 import log_file
@@ -42,11 +41,12 @@ def test_model(model,prepare,hp):
             paths = np.array(paths)
             inputs = inputs.to(prepare.device)
             labels = labels.to(prepare.device)
-            # transfer to MSI =1 MSS=0
+            # transfer to MSI =1 MSS=0 for binary loss
             labels = 1-labels
             outputs = model(inputs)
             prob_y = F.softmax(outputs,1)
             _, preds = torch.max(prob_y, 1)
+            # transfer to MSI =1 MSS=0 for binary loss
             preds = 1-preds
             #MSI probability
             prob_y = prob_y[:,0]
