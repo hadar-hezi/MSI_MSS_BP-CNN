@@ -13,19 +13,16 @@ import matplotlib as mpl
 from scipy import stats
 from scipy import io
 import pandas as pd
-# from matlab_data import *
 
 
-    
-    
 def plot_mean_auc(p,mode,hp):
     total_tpr =[]
     total_fpr=[]
     total_auc=[]
     for j in range(hp['n_folds']):
+    # loading patients labels and probabilities
         try:
             with (open(f"{hp['root_dir']}roc_out_{j}.p", "rb")) as openfile:
-            # with (open(f"{root}roc_out_pca_{j}.p", "rb")) as openfile:
                 data = pickle.load(openfile)
                 labels = np.array(data['labels'])
                 probs = np.array(data['probs'])
@@ -37,11 +34,11 @@ def plot_mean_auc(p,mode,hp):
             #pickle data
             data = {"labels": labels, "probs": probs}
             pickle.dump( data, open( f"{hp['root_dir']}roc_out_{j}.p", "wb" ) )
-        
+        # ROC
         lr_fpr, lr_tpr, MSI_tp_auc = compute_roc(labels, probs)
                                                 
         print("iter ", j, "AUC: ", MSI_tp_auc)
-    
+        # interpoating the fpr axis
         mean_fpr = np.linspace(0, 1, 200)
         interp_tpr = np.interp(mean_fpr, lr_fpr, lr_tpr)
         interp_tpr[0] = 0.0
@@ -54,13 +51,10 @@ def plot_mean_auc(p,mode,hp):
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(total_auc)
     std_tpr = np.std(total_tpr, axis=0)
-    print(mean_auc)
+    # 95 CI of AUC results
     sorted_auc = np.array(total_auc)
     sorted_auc.sort()
-    
-    # Computing the lower and upper bound of the 90% confidence interval
-    # You can change the bounds percentiles to 0.025 and 0.975 to get
-    # a 95% confidence interval instead.
+
     confidence_lower = sorted_auc[int(0.05 * len(sorted_auc))]
     # nonzero returns tuple
     index = np.nonzero(total_auc==confidence_lower)
@@ -98,7 +92,6 @@ def get_mean_roc(root):
         print("iter ", j, "AUC: ", MSI_tp_auc)
     
         mean_fpr = np.linspace(0, 1, 200)
-        # mean_fpr = lr_fpr
         interp_tpr = np.interp(mean_fpr, lr_fpr, lr_tpr)
         interp_tpr[0] = 0.0
         total_tpr.append(interp_tpr)
@@ -110,9 +103,6 @@ def get_mean_roc(root):
     sorted_auc = np.array(total_auc)
     sorted_auc.sort()
     
-    # Computing the lower and upper bound of the 90% confidence interval
-    # You can change the bounds percentiles to 0.025 and 0.975 to get
-    # a 95% confidence interval instead.
     confidence_lower = sorted_auc[int(0.05 * len(sorted_auc))]
     # nonzero returns tuple
     index = np.nonzero(total_auc==confidence_lower)
@@ -131,7 +121,7 @@ def get_mean_roc(root):
     fpr = [mean_fpr,mean_fpr,mean_fpr]
     tpr = [tpr_lo_ci,mean_tpr,tpr_hi_ci]
     return fpr,tpr,mean_auc,total_auc
-    
+# plots a boxplot of baseline vs BP-CNN AUC results    
 def roc_boxplot(aucs_base,aucs_sub,feature):
     data = [aucs_base,aucs_sub]
 
@@ -150,7 +140,6 @@ def roc_boxplot(aucs_base,aucs_sub,feature):
                          patch_artist=True,  # fill with color
                          labels=labels)  # will be used to label x-ticks
     ax.set_ylim([0.67, 0.9])
-    # plt.rcParams.update({'font.size':20})
     ax.set_title(f"AUC results of baseline and {feature}",fontsize=24)
     ax.grid(True)
     # fill with colors
@@ -160,11 +149,13 @@ def roc_boxplot(aucs_base,aucs_sub,feature):
 
     plt.savefig(f"{hp['root_dir']}boxplot_roc.png",dpi=500, bbox_inches = "tight")
 
+# paired t-test of the AUC results
 def paired_t_test(samples_a,samples_b):
     print(stats.ttest_rel(samples_a, samples_b))
     print(np.std(samples_a))
     print(np.std(samples_b))
-    
+
+# plots the ROC of baseline vs BP-CNN results    
 def plot_base_sub(hp,feature):
 
     mode = 'test'
@@ -193,161 +184,15 @@ def plot_base_sub(hp,feature):
     ax.set_title(f"ROC Base vs {feature}")
 
     ax.grid(True)
-    #plt.show() 
     fig.savefig("{}roc_{}_vs.png".format(hp['root_dir'],mode),dpi=500,bbox_inches="tight") 
-    # roc_boxplot(aucs1,aucs2,feature)  
+    roc_boxplot(aucs1,aucs2,feature)  
     paired_t_test(aucs1,aucs2)
     data_aucs = {"aucs_base": aucs1, "aucs_sub": aucs2}
     pickle.dump( data_aucs, open( f"{hp['root_dir']}aucs.p", "wb" ) )
 
-def roc_per_patient_matlab(p,files,labels,preds):
-    names = []
-    pred_MSI_per_patient, true_MSI_per_patient = [],[]
-    for j,name in enumerate(p.test_patients):
-       # files of this patient
-        indices = [i for i, x in enumerate(files) if name in x]
-        # the test list might contain patient names who's label is -1
-        if len(indices) == 0:
-            continue
-        # MSI labels for each patient
-        true_MSI = (labels[indices[0]] == 1) 
-        true_MSS = (labels[indices[0]] == 0)
-        # equal to 1 for MSI
-        true_MSI_score = int(true_MSI)
-        #load patches probabilities
-        preds_patient = preds[indices]
-        # print(preds_patient)
-        # print(sum(preds_patient==1))
-        pred_MSI_score = sum(preds_patient==1)/len(preds_patient)
-    
-        pred_MSI_per_patient.append(pred_MSI_score.item())
-        true_MSI_per_patient.append(true_MSI_score)
-        names.append(name)
-    data = {"name": names, "label": true_MSI_per_patient}
-    path = f"{hp['root_dir']}test_labels.csv"
-    df = pd.DataFrame(data)
-    df.to_csv(path)
-    return true_MSI_per_patient,pred_MSI_per_patient
-def get_labels(names):
-    df2 = pd.read_csv('test_labels.csv')
-    csv_names = np.array(df2['name'])
-    csv_labels = np.array(df2['label'])
-    labels = []
-    for name in names:
-        ind = [i for i, x in enumerate(csv_names) if name==x]
-        label = csv_labels[ind[0]]
-        labels.append(label)
-    return labels
-        
-    
-def matlab_roc(p):
-    # try:
-    #     with (open(f"{hp['root_dir']}roc_out_matlab.p", "rb")) as openfile:
-    #     # with (open(f"{root}roc_out_pca_{j}.p", "rb")) as openfile:
-    #         data = pickle.load(openfile)
-    #         labels = np.array(data['labels'])
-    #         # probs_msi = np.array(data['probs'])
-    #         files = np.array(data['files'])
-    #         preds = np.array(data['preds'])
-    # finally:
-        # a = io.loadmat('classiMSSvsMSIMUT_hadar_CRC_DX.mat')
-        # probs = a['predScoresExternal']
-        # probs_msi = probs[:,0];
-    df = pd.read_excel('kather_res.xlsx')
-    names = np.array(df['PatientID'])
-    probs = np.array(df['predictedScore'])
-    labels = get_labels(names)
-    labels = np.array(labels)
-    # df2 = pd.read_csv('test_res_data.csv',header=None) 
-    # files = np.array(df2[0])
-    # labels = df2[1]
-    # labels = np.array(labels)
-    # labels[labels=='MSS'] = 0      
-    # labels[labels=='MSIMUT'] = 1
 
-    # preds = np.array(df2[2])
-    # preds[preds=='MSS'] = 0      
-    # preds[preds=='MSIMUT'] = 1
-    # labels,probs = roc_per_patient_matlab(p,files,labels,preds)
-        
-        #pickle data
-        # data = {"labels": labels, "preds": preds,"files": files}
-        # pickle.dump( data, open( f"{hp['root_dir']}roc_out_matlab.p", "wb" ) )
-    n=len(labels)
-   
-    inds = list(range(len(labels)))
-    total_tpr =[]
-    total_fpr=[]
-    total_auc=[]
-    np.random.seed(13)
-    for i in range(500):       
-        ind_i = np.random.choice(inds, size=int(np.ceil(0.95*n)),replace=True)
-        labels_i = labels[ind_i]
-        # files_i = files[ind_i]
-        probs_msi_i = probs[ind_i]
-        # preds_i = preds[ind_i]
-        # labels_p,probs_p = roc_per_patient_matlab(p,files_i,labels_i,
-                                                  # preds_i)
-        # print(labels_p)
-        names_i = names[ind_i]
-        probs_i = probs[ind_i]
-        lr_fpr, lr_tpr, MSI_tp_auc = compute_roc(labels_i, probs_msi_i)
-                                                
-        print("iter ", i, "AUC: ", MSI_tp_auc)
-    
-        mean_fpr = np.linspace(0, 1, 200)
-        # mean_fpr = lr_fpr
-        interp_tpr = np.interp(mean_fpr, lr_fpr, lr_tpr)
-        interp_tpr[0] = 0.0
-        total_tpr.append(interp_tpr)
-        total_fpr.append(lr_fpr)
-        total_auc.append(MSI_tp_auc)
-    
-    mean_tpr = np.mean(total_tpr, axis=0)
-    mean_tpr[-1] = 1.0
-    mean_auc = auc(mean_fpr, mean_tpr)
-    std_auc = np.std(total_auc)
-    std_tpr = np.std(total_tpr, axis=0)
-    # tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    # tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    print(mean_auc)
-    sorted_auc = np.array(total_auc)
-    sorted_auc.sort()
-    
-    # Computing the lower and upper bound of the 90% confidence interval
-    # You can change the bounds percentiles to 0.025 and 0.975 to get
-    # a 95% confidence interval instead.
-    confidence_lower = sorted_auc[int(0.05 * len(sorted_auc))]
-    # nonzero returns tuple
-    index = np.nonzero(total_auc==confidence_lower)
-    index_lo = index[0]
-    
-    # take the first occurenrce from indices list
-    tpr_lo_ci = total_tpr[index_lo[0]]
-    fpr_lo_ci = total_fpr[index_lo[0]]
-    
-    confidence_upper = sorted_auc[int(0.95 * len(sorted_auc))]
-    index= np.nonzero(total_auc==confidence_upper)
-    index_hi = index[0]
-    tpr_hi_ci = total_tpr[index_hi[0]]
-    fpr_hi_ci = total_fpr[index_hi[0]]
 
-    fpr = [mean_fpr,mean_fpr,mean_fpr]
-    tpr = [tpr_lo_ci,mean_tpr,tpr_hi_ci]
-    #pickle data
-    data = {"mean fpr": mean_fpr, "tpr low ci": tpr_lo_ci,"mean tpr": mean_tpr,"tpr high ci":tpr_hi_ci}
-    pickle.dump( data, open( f"{hp['root_dir']}data_for_roc_plot_matlab.p", "wb" ) )
-    auc_ = [confidence_lower,mean_auc,confidence_upper]
-    print(auc_)
-    plot_roc_with_ci(fpr,tpr,auc_,hp,'test')
-    # print(n)
-    return mean_auc
 hp = hyperparams() 
-# p = Prepare(hp)  
-# matlab_roc(p)
 
-
-
-
-#plot_mean_auc(p,'test',hp)  
+plot_mean_auc(p,'test',hp)  
 plot_base_sub(hp,"CIMP") 
