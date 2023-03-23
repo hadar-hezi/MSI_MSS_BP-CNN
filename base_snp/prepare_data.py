@@ -127,7 +127,7 @@ class Prepare():
         # self.loaded_ind['test'] = test_sampler.get_indices()
 #TODO move out from class
     def make_weights_for_balanced_classes(self,samples, nclasses):                        
-      """
+       """
         
         Parameters
         ----------
