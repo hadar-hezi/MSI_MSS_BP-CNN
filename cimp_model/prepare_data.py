@@ -138,7 +138,7 @@ class Prepare():
         self.dataloaders['test']= dl_test
 
     def make_weights_for_balanced_classes(self,images, nclasses):                        
-       """
+        """
         
         Parameters
         ----------
